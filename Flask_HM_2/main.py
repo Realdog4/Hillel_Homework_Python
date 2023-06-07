@@ -1,6 +1,13 @@
+<<<<<<< Updated upstream
 from flask import Flask, send_file, jsonify, request
 from faker import Faker
 # import requests
+=======
+from flask import Flask
+from faker import Faker
+import string
+import random
+>>>>>>> Stashed changes
 
 app = Flask(__name__)
 fake = Faker()
@@ -15,6 +22,18 @@ def page_not_found(error):
 
 
 
+<<<<<<< Updated upstream
+=======
+@app.route('/generate_password')
+def generate_password():
+    password_length = random.randint(10, 20)
+    password_characters = string.ascii_letters + string.digits + string.punctuation
+
+    password = ''.join(random.choice(password_characters) for _ in range(password_length))
+
+    return f"New password: {password}"
+
+>>>>>>> Stashed changes
 
 @app.route('/mean/')
 def get_mean():
@@ -32,8 +51,12 @@ def get_mean():
         mean_weight = round(sum(weights) / len(weights), 2)
         mean_height = round(sum(heights) / len(heights), 2)
 
+<<<<<<< Updated upstream
         return f"Середній зріст: {mean_height} см, Середня вага: {mean_weight} кг"
 
+=======
+        return f"Average high: {mean_height} sm, Average weight: {mean_weight} kg"
+>>>>>>> Stashed changes
 
 
 
