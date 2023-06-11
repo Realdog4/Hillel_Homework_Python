@@ -2,7 +2,8 @@ from flask import Flask, Response, jsonify
 from faker import Faker
 import requests
 from http import HTTPStatus
-from webargs import flaskparser, fields
+from webargs import fields
+from webargs.flaskparser import use_kwargs
 from helpers import save_to_csv, get_symbol
 
 app = Flask(__name__)
@@ -11,7 +12,7 @@ fake = Faker()
 
 @app.route('/')
 def openPage():
-    return "Hello! Use the link to view information: /generate_students or /bitcoin_rate"
+    return "Hello! Use the link to view information: /generate_students?count=10 or /bitcoin_rate"
 
 @app.errorhandler(HTTPStatus.UNPROCESSABLE_ENTITY)
 @app.errorhandler(HTTPStatus.BAD_REQUEST)
@@ -37,9 +38,8 @@ def error_handler(error):
 
 
 @app.route('/generate_students', methods=['GET'])
-@flaskparser.use_args({'count': fields.Int(missing=1000, validate=lambda val: 0 < val <= 1000)}, location="query")
-def generate_students(args):
-    count = args['count']
+@use_kwargs({'count': fields.Int(required=True, validate=lambda val: 0 < val <= 1000)}, location="query")
+def generate_students(count):
     students = []
 
     for _ in range(count):
@@ -65,10 +65,8 @@ def generate_students(args):
 
 
 @app.route('/bitcoin_rate', methods=['GET'])
-@flaskparser.use_args({'currency': str, 'count': int}, location="query")
-def get_bitcoin_value(args):
-    currency = args.get('currency', 'USD')
-    count = args.get('count', 1)
+@use_kwargs({'currency': str, 'count': int}, location="query")
+def get_bitcoin_value(currency='USD', count=1):
 
     url = 'https://bitpay.com/rates'
     response = requests.get(url, {})
