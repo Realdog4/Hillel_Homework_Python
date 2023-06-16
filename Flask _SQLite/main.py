@@ -1,24 +1,16 @@
 from flask import Flask, request, render_template_string, jsonify
-import sqlite3
 from http import HTTPStatus
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from helpers import connection_to_database, get_db_connection
 
 app = Flask(__name__)
-DATABASE = 'chinook.db'
-
-
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 @app.route('/')
-def openPage():
+def open_page():
     return "Hello! Use the link to view information:" \
            "<br>/sales<br>/sales?country=France<br>/track?track_id=2820<br>/tracks_duration"
-
 
 
 @app.errorhandler(HTTPStatus.UNPROCESSABLE_ENTITY)
@@ -35,21 +27,18 @@ def error_handler(error):
             error.code,
             headers
         )
-    else:
-        return jsonify(
-            {
-                'errors': messages
-            },
-            error.code,
-        )
-
+    return jsonify(
+        {
+            'errors': messages
+        },
+        error.code,
+    )
 
 
 @app.route('/sales', methods=['GET'])
 @use_kwargs({"country": fields.Str(required=False)})
 def sales(country=None):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = connection_to_database()
 
     country = request.args.get('country')
 
@@ -79,14 +68,12 @@ def sales(country=None):
 
 
 @app.route('/track', methods=['GET'])
-@use_kwargs({'track_id': fields.Int(required=True)})
-def get_info_about_track(track_id):
+def get_info_about_track():
+    cursor = connection_to_database()
+
     track_id = request.args.get('track_id')
     if not track_id:
         return 'Track ID is missing'
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
     cursor.execute('''
         SELECT tracks.*, albums.Title AS AlbumTitle, artists.Name AS ArtistName, genres.Name AS GenreName,
@@ -129,8 +116,7 @@ def get_info_about_track(track_id):
 
 @app.route('/tracks_duration', methods=['GET'])
 def calculate_total_track_duration():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = connection_to_database()
 
     query = '''
     SELECT SUM(Milliseconds) FROM tracks
@@ -142,11 +128,10 @@ def calculate_total_track_duration():
     total_duration_hours = total_duration_milliseconds / (1000 * 60 * 60)
 
     cursor.close()
+    conn = get_db_connection()
     conn.close()
 
     return f'Total track duration: {total_duration_hours} hours'
-
-
 
 
 if __name__ == '__main__':
